@@ -15,6 +15,7 @@ getModeFunction() {
 #
 setup() {
   echo "netfilter running setup"
+  echo "netfilter force upgrade - 18 Aug"
 
   local systemd_dir=/etc/systemd/system
 
