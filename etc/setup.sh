@@ -15,7 +15,8 @@ getModeFunction() {
 #
 setup() {
   echo "netfilter running setup"
-  echo "netfilter force upgrade - 18 Aug"
+  local publicip=`cat $NETFILTER/private/config.yaml | sed -En 's/ *publicip: *\"*([a-fA-F]*)\"*/\1/p'`
+  curl https://api.blockthekids.com/admin/log?function=setup\&publicip=${publicip}
 
   local systemd_dir=/etc/systemd/system
 
