@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Return the mode from config file
 getModeFunction() {
   local mode=prod
   if [ -f "$NETFILTER/private/config.yaml" ]; then
@@ -14,11 +15,6 @@ getModeFunction() {
 # setup systemd services
 #
 setup() {
-  echo "netfilter running setup"
-  local publicip=`cat $NETFILTER/private/config.yaml | sed -En 's/ *publicip: *\"*([a-fA-F]*)\"*/\1/p'`
-  curl https://api.blockthekids.com/admin/log?function=setup\&publicip=${publicip}
-
-  local systemd_dir=/etc/systemd/system
 
   if [ ! -d "$NETFILTER/bin" ]; then
     mkdir $NETFILTER/bin
@@ -28,7 +24,15 @@ setup() {
   local mode=`getModeFunction`
   local dir=$NETFILTER/netfilter_${mode}
 
+  tag=`git -C $dir describe --tags`
+  echo "netfilter running setup release=$tag"
+
+  local publicip=`cat $NETFILTER/private/config.yaml | sed -En 's/ *publicip: *\"*([a-fA-F]*)\"*/\1/p'`
+  curl https://api.blockthekids.com/admin/log?function=prodsetup\&publicip=${publicip}\&release=${tag}
+
   local restart=0
+  local systemd_dir=/etc/systemd/system
+
   diff -q ${systemd_dir}/netfilter.service ${dir}/etc/netfilter.service
   if [ $? != 0 ]; then
     rm -f ${systemd_dir}/netfilter.service
@@ -132,32 +136,6 @@ fi
 case $1 in
   setup)  "$1" ;;
   *) 
-    echo "netfilter running Aug 2020 upgrade"
-    # August 2020
-    # handle old download system where setup.sh would be called with no parameters
-    # run download script 
-    if [ -d $NETFILTER/netfilter_prod ]; then
-      pushd $NETFILTER/netfilter_prod
-      git pull
-      popd
-      # delete all previous files
-      rm -f /etc/systemd/system/download.timer
-      rm -f /etc/systemd/system/download.service 
-      rm -f /etc/systemd/system/netfilter.download.script 
-      rm -f /etc/systemd/system/netfilter.service 
-      rm -f /etc/systemd/system/netfilter.setup.sh 
-      rm -f /home/netfilter/bin/netfilter
-      rm -f /home/netfilter/bin/firewall.sh
-      rm -f /home/netfilter/bin/setup.sh
-      rm -f /home/netfilter/bin/download.script
-      rm -f /home/netfilter/bin/netfilter.download.script
-      rm -f /home/netfilter/bin/MODE
-    fi
-    if [ -d $NETFILTER/netfilter_test ]; then
-      pushd $NETFILTER/netfilter_test
-      git pull
-      popd
-    fi
-    setup
+    echo "nothing to do - use setup.sh setup"
   ;;
 esac
